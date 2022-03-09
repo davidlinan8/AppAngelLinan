@@ -1,0 +1,172 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="mt-4">Registro de clientes</h1>
+<div class="rows">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" class="btn btn-primary" onclick="abrirModal()">Agregar Cliente</button>
+            </div>
+            <div class="card-body">
+                <table id="dtClientes" class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Pais</th>
+                            <th>Tipo de Entidad</th>
+                            <th>Accion</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="card-footer">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="clienteModal" tabindex="-1" role="dialog" aria-labelledby="clienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Añadir Cliente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="recipient-name" class="col-form-label">Nombres:</label>
+                            <input type="text" class="form-control" id="nombre">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="recipient-name2" class="col-form-label">Pais:</label>
+                            <select class="form-control" id="pais">
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group row">
+                                <label class="col-form-label">Tipo de entidad: </label>
+                                <div class="form-control">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="tipoEntidad" id="individuo" value="I">
+                                        <label class="form-check-label" for="individuo">Individuo</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="tipoEntidad" id="compania" value="C">
+                                        <label class="form-check-label" for="compania">Compañia</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardar()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{ 
+    <script>
+
+        var tablaCliente;
+
+        $(document).ready(function () {
+
+            cargarClientes();
+
+            jQuery.ajax({
+                url: "@Url.Action("ListarPaises", "Cliente")",
+                type: "GET",
+                datatype: "json",
+                contentType: "application/json; charset-utf-8",
+                success: function (data) {
+                    var options = '<option hidden>Seleccione</option>';
+                    $('#pais').empty();
+                    data.forEach(function (item) {
+                        options += '<option value="' + item['id'] + '">' + item['nombre'] + '</option>';
+                    });
+                    $('#pais').html(options);
+                }
+            });
+
+        });
+
+        function cargarClientes() {
+            tablaCliente = $('#dtClientes').DataTable({
+                "ajax": {
+                    "url": "@Url.Action("Listar","Cliente")",
+                    "type": "GET",
+                    "datatype": "json",
+                },
+                "columns": [
+                    { "data": "nombre" },
+                    { "data": "pais" },
+                    { "data": "tipoEntidad" },
+                    {
+                        "data": "id", "render": function (data) {
+                            return "<button class='btn btn-primary btn-sm' type='button' onclick='eliminar(" + data + ")'><i class='fa-solid fa-circle-minus'></i></button>"
+                        }
+                    }
+                ],
+                "bPaginate": false,
+                "bFilter": false,
+            });
+        }
+
+        function abrirModal() {
+            $('#nombre').val('');
+            $('#pais').val('');
+            $('#tipoEntidad').val('');
+            $('#clienteModal').modal('show');
+        }
+
+        function eliminar($id) {
+            jQuery.ajax({
+                url: "@Url.Action("Eliminar", "Cliente")" + "?id=" + $id,
+                type: "DELETE",
+                datatype: "json",
+                contentType: "application/json; charset-utf-8",
+                success: function (data) {
+                    if (data) {
+                        tablaCliente.ajax.reload();
+                    }
+                }
+            });
+        }
+
+        function guardar() {
+            var data = {};
+            data["Nombre"] = $('#nombre').val();
+            data["TipoEntidad"] = $('input[name="tipoEntidad"]:checked').val();
+            data["PaisId"] = parseInt($('#pais').val());
+
+            jQuery.ajax({
+                url: "@Url.Action("Guardar", "Cliente")",
+                type: "POST",
+                data: JSON.stringify(data),
+                datatype: "json",
+                contentType: "application/json",
+                success: function (data) {
+                    if (data) {
+                        tablaCliente.ajax.reload();
+                        $('#clienteModal').modal('hide');
+                    }
+                }
+            });
+        }
+    </script>
+}
+
+
