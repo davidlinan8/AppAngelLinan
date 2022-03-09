@@ -1,0 +1,1 @@
+La aplicación se estructura en Asp Core MVC con EF Core, usando directamente para la comunicación con la BD jquery.
